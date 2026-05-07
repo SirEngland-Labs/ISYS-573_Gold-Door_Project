@@ -186,7 +186,8 @@ DASHBOARD_PASSWORD=yourpassword
 
 ## 👥 Team
 
-ISYS 573 — Agentic AI Group Project
+ISYS 573
+Gregory England, Parneet Kaur, Alexander Davila, Luis Aguilar
 
 ---
 
