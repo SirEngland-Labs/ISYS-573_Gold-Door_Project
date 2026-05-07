@@ -23,10 +23,10 @@ Restaurant staff get:
 
 ## ⚙️ Core Features
 
-- 🗣️ Multi-turn reservation booking flow  
-- 📚 RAG-powered FAQ system  
-- ❌ Reservation cancellation & lookup  
-- 📊 Admin dashboard for booking management  
+-  Multi-turn reservation booking flow  
+-  RAG-powered FAQ system  
+-  Reservation cancellation & lookup  
+-  Admin dashboard for booking management  
 
 ---
 
@@ -186,7 +186,7 @@ DASHBOARD_PASSWORD=yourpassword
 
 ## 👥 Team
 
-ISYS 573
+ISYS 573 - 
 Gregory England, Parneet Kaur, Alexander Davila, Luis Aguilar
 
 ---
