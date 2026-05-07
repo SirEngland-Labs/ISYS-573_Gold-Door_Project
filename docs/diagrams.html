@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gold Door — Architecture Diagrams</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #0d1117;
+            color: #e6edf3;
+        }
+        h1 { color: #d4a843; border-bottom: 2px solid #d4a843; padding-bottom: 10px; }
+        h2 { color: #d4a843; margin-top: 60px; }
+        .diagram {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0 40px 0;
+            text-align: center;
+        }
+        p { color: #8b949e; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <h1>Gold Door — Architecture Diagrams</h1>
+    <p>Goldie: AI-Powered Restaurant Reservation Agent</p>
+
+    <h2>1. System Architecture</h2>
+    <p>How all the components connect — from browser to database.</p>
+    <div class="diagram">
+        <pre class="mermaid">
+graph TB
+    Customer["Customer Browser"] -->|HTTP| FastAPI["FastAPI Server :8000"]
+    Staff["Staff Browser"] -->|HTTP| FastAPI
+    FastAPI -->|"/api/message"| Agent["LangGraph Agent"]
+    FastAPI -->|"/api/admin/*"| DB[("SQLite DB")]
+    Agent --> Router{"Intent Router"}
+    Router -->|reserve| Reserve["Reserve Node"]
+    Router -->|faq| FAQ["FAQ Node"]
+    Router -->|cancel| Cancel["Cancel Node"]
+    Router -->|off_topic| Decline["Decline Node"]
+    Reserve --> DB
+    Cancel --> DB
+    FAQ --> FAISS["FAISS Vector Store"]
+    FAISS --> Knowledge["Knowledge Files .md"]
+    Agent -->|Primary| MiniMax["MiniMax M2.7"]
+    Agent -->|Fallback| Gemini["Gemini Flash"]
+        </pre>
+    </div>
+
+    <h2>2. Conversation State Machine</h2>
+    <p>How the agent routes and handles multi-turn conversations.</p>
+    <div class="diagram">
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> Router: Customer message
+    Router --> Reserve: intent = reserve
+    Router --> FAQ: intent = faq
+    Router --> Cancel: intent = cancel
+    Router --> Decline: intent = off_topic
+
+    state Reserve {
+        [*] --> CollectName
+        CollectName --> CollectDate
+        CollectDate --> CollectTime
+        CollectTime --> CollectPartySize
+        CollectPartySize --> CollectRequests
+        CollectRequests --> CheckAvailability
+        CheckAvailability --> Confirm: available
+        CheckAvailability --> Suggest: unavailable
+    }
+
+    state Cancel {
+        [*] --> LookupPhone
+        LookupPhone --> ShowMatches
+        ShowMatches --> ConfirmCancel
+    }
+
+    Reserve --> [*]: Booking confirmed
+    FAQ --> [*]: Answer returned
+    Cancel --> [*]: Cancelled
+    Decline --> [*]: Polite refusal
+        </pre>
+    </div>
+
+    <h2>3. Customer Journey</h2>
+    <p>The three main paths a customer can take.</p>
+    <div class="diagram">
+        <pre class="mermaid">
+flowchart LR
+    A["Open Chat"] --> B["Type Message"]
+    B --> C{"Intent?"}
+    C -->|Book| D["Provide Details"]
+    D --> E["Get Confirmation"]
+    C -->|Question| F["Get Answer from Knowledge Base"]
+    C -->|Cancel| G["Lookup by Phone"]
+    G --> H["Confirm Cancellation"]
+        </pre>
+    </div>
+
+    <h2>4. Deployment</h2>
+    <p>How Gold Door is hosted and exposed to the internet.</p>
+    <div class="diagram">
+        <pre class="mermaid">
+graph TB
+    subgraph Internet
+        CF["Cloudflare Tunnel"]
+    end
+    subgraph Mac_Mini["Mac Mini — OrbStack"]
+        subgraph Docker_Compose["Docker Compose"]
+            App["restaurant-agent :8000"]
+            Vol[("SQLite Volume")]
+            App --- Vol
+        end
+    end
+    subgraph Mounted["Mounted Read-Only"]
+        K["/knowledge/*.md"]
+    end
+    CF -->|"HTTPS to HTTP"| App
+    K -.->|read-only| App
+        </pre>
+    </div>
+
+    <h2>5. Database Schema</h2>
+    <p>SQLite tables — 10 pre-seeded restaurant tables, reservations with status tracking.</p>
+    <div class="diagram">
+        <pre class="mermaid">
+erDiagram
+    TABLES ||--o{ RESERVATIONS : "assigned to"
+    TABLES {
+        int id PK
+        string name
+        int capacity
+        string location
+    }
+    RESERVATIONS {
+        int id PK
+        string customer_name
+        string customer_phone
+        int party_size
+        string date
+        string time
+        int table_id FK
+        string status
+        string special_requests
+        string created_at
+    }
+        </pre>
+    </div>
+
+    <h2>6. RAG Pipeline</h2>
+    <p>How customer questions get answered using restaurant knowledge files.</p>
+    <div class="diagram">
+        <pre class="mermaid">
+flowchart LR
+    A["menu.md | hours.md | policies.md"] -->|"chunk 300 chars"| B["Text Chunks"]
+    B -->|"all-MiniLM-L6-v2"| C["384-dim Vectors"]
+    C --> D[("FAISS Index")]
+    E["Customer Question"] -->|embed| F["Query Vector"]
+    F -->|"similarity search"| D
+    D -->|"top 3 chunks"| G["LLM + Context"]
+    G --> H["Grounded Answer"]
+        </pre>
+    </div>
+
+    <h2>7. Security Layers</h2>
+    <p>Multi-layered defense pipeline — every message passes through before reaching the agent.</p>
+    <div class="diagram">
+        <pre class="mermaid">
+flowchart LR
+    A["User Input"] --> B{"Length under 2000?"}
+    B -->|no| X["Blocked"]
+    B -->|yes| C{"Injection Pattern?"}
+    C -->|match| X
+    C -->|clean| D{"Rate Limit OK?"}
+    D -->|exceeded| X
+    D -->|ok| E["Agent Processes"]
+    E --> F{"Output Filter"}
+    F -->|"API key or path leaked"| X
+    F -->|clean| G["Response to User"]
+        </pre>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#d4a843',
+                primaryTextColor: '#e6edf3',
+                primaryBorderColor: '#d4a843',
+                lineColor: '#8b949e',
+                secondaryColor: '#1f2937',
+                tertiaryColor: '#161b22',
+                background: '#161b22',
+                mainBkg: '#1f2937',
+                nodeBorder: '#d4a843',
+                clusterBkg: '#1a1f2e',
+                clusterBorder: '#30363d',
+                titleColor: '#d4a843',
+                edgeLabelBackground: '#161b22'
+            }
+        });
+    </script>
+</body>
+</html>
