@@ -1,6 +1,6 @@
 # 🚪 Gold Door Restaurant Reservation Agent
 
-**"Goldie"** — An AI-powered conversational agent for restaurant reservations, FAQ, and booking management.
+**"Goldie"** An AI-powered conversational agent for restaurant reservations, FAQ, and booking management.
 
 Built for **ISYS 573 · Agentic AI · Track A (Single Agent)**
 
@@ -8,7 +8,7 @@ Built for **ISYS 573 · Agentic AI · Track A (Single Agent)**
 
 ## 📌 What Is This?
 
-Gold Door is a fully containerized AI chatbot that handles restaurant reservations 24/7 — no phone calls required.
+Gold Door is a fully containerized AI chatbot that handles restaurant reservations 24/7, with no phone calls required.
 
 Customers can:
 - Book tables through a chat interface
